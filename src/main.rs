@@ -50,11 +50,9 @@ fn main() {
         
         loop {
             if let Ok(_) = stdin.lock().read(&mut buffer) {
-                // Any key press (Enter, Space, or any other key) will stop
-                if buffer[0] == b'\n' || buffer[0] == b' ' || buffer[0] != 0 {
-                    stop_signal_clone.store(true, Ordering::Relaxed);
-                    break;
-                }
+                // Any key press will stop recording
+                stop_signal_clone.store(true, Ordering::Relaxed);
+                break;
             }
         }
     });
