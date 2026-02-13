@@ -1,5 +1,7 @@
+#[cfg(feature = "api")]
 use reqwest::multipart;
 
+#[cfg(feature = "api")]
 pub async fn transcribe(
     base_url: &str,
     api_key: &str,
