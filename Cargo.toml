@@ -5,7 +5,7 @@ edition = "2024"
 authors = ["Adolfo Usier"]
 license = "MIT"
 description = "Minimal CLI voice-to-text tool for Linux with local transcription"
-repository = "https://github.com/adolfousier/linwhisper"
+repository = "https://github.com/harryhaaren/linwhisper"
 
 [features]
 default = []
