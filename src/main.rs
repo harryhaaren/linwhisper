@@ -4,7 +4,7 @@ mod audio;
 mod config;
 mod local_stt;
 
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 use std::sync::{
     Arc,
     atomic::{AtomicBool, Ordering},
@@ -38,11 +38,14 @@ fn main() {
     let stop_signal_clone = Arc::clone(&stop_signal);
 
     // Spawn thread to listen for Enter or Space key
-    thread::spawn(move || {
+    let input_thread = thread::spawn(move || {
         let stdin = io::stdin();
         let mut buffer = [0u8; 1];
 
         loop {
+            if stop_signal_clone.load(Ordering::Relaxed) {
+                break;
+            }
             if let Ok(_) = stdin.lock().read(&mut buffer) {
                 // Any key press will stop recording
                 stop_signal_clone.store(true, Ordering::Relaxed);
@@ -88,11 +91,17 @@ fn main() {
 
     match text {
         Ok(transcription) => {
-            println!("{}", transcription);
+            // Ignore broken pipe errors when printing
+            let stdout = io::stdout();
+            let mut handle = stdout.lock();
+            let _ = writeln!(handle, "{}", transcription);
         }
         Err(e) => {
             eprintln!("Transcription failed: {e}");
             std::process::exit(1);
         }
     }
+
+    // Give the input thread a chance to exit cleanly
+    let _ = input_thread.join();
 }
