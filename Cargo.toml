@@ -4,20 +4,22 @@ version = "0.1.13"
 edition = "2024"
 authors = ["Adolfo Usier"]
 license = "MIT"
-description = "Floating voice-to-text tool for Linux with local and API-based transcription"
-repository = "https://github.com/adolfousier/linwhisper"
+description = "Minimal CLI voice-to-text tool for Linux with local transcription"
+repository = "https://github.com/harryhaaren/linwhisper"
+
+[features]
+default = []
+api = ["reqwest", "tokio", "serde", "serde_json"]
 
 [dependencies]
-gtk4 = "0.9"
 cpal = "0.15"
 hound = "3.5"
-reqwest = { version = "0.12", features = ["multipart", "json"] }
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync"] }
-rusqlite = { version = "0.32", features = ["bundled"] }
-dotenvy = "0.15"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-chrono = "0.4"
-dirs = "6"
 whisper-rs = "0.15"
 rubato = "0.14"
+dirs = "6"
+
+# Optional API dependencies (behind feature flag)
+reqwest = { version = "0.12", features = ["multipart", "json"], optional = true }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync"], optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
+serde_json = { version = "1", optional = true }

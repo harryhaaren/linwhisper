@@ -5,7 +5,7 @@ default_model := "ggml-base.en.bin"
 build:
     cargo build --release
 
-# Run with current .env settings
+# Run the CLI transcriber (local mode)
 run:
     cargo run --release
 
@@ -19,11 +19,11 @@ run-local model=default_model:
     else \
         echo "Model {{model}} already downloaded."; \
     fi
-    PRIMARY_TRANSCRIPTION_SERVICE=local WHISPER_MODEL={{model}} cargo run --release
+    WHISPER_MODEL={{model}} cargo run --release
 
-# Run in API mode (default: Groq)
+# Build and run with API mode (requires --features api)
 run-api:
-    PRIMARY_TRANSCRIPTION_SERVICE=api cargo run --release
+    cargo run --release --features api
 
 # Download a whisper model (without running)
 download-model model=default_model:

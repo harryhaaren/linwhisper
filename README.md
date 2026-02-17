@@ -1,25 +1,19 @@
 # LinWhisper
 
-Floating voice-to-text tool for Linux. Click to record, click to transcribe and paste. Supports fully local transcription via whisper.cpp or any OpenAI-compatible API endpoint (Groq, Ollama, OpenRouter, LM Studio, LocalAI, etc.).
-
-![LinWhisper button states](src/screenshots/ui-buttons.png)
+Minimal CLI voice-to-text tool for Linux. Records audio when launched, transcribes when you press Enter/Space. Fully local transcription via whisper.cpp (no network required by default).
 
 ## Privacy
 
-LinWhisper has no account, no telemetry, and no background processes. Your microphone is **never accessed** until you explicitly click the record button. Audio is captured in-memory, never written to disk. Only the transcribed text is stored locally in SQLite on your machine.
-
-With **local mode** (`PRIMARY_TRANSCRIPTION_SERVICE=local`), everything stays on your machine - no network requests at all. With **API mode** (`PRIMARY_TRANSCRIPTION_SERVICE=api`), audio is sent to your configured endpoint (Groq by default, but can point to a local Ollama/LM Studio instance too).
+LinWhisper has no account, no telemetry, and no background processes. Your microphone is **never accessed** until you explicitly run the program. Audio is captured in-memory, never written to disk. With **local mode** (default), everything stays on your machine - no network requests at all.
 
 ## Features
 
-- Always-on-top floating microphone button (draggable, position persists)
-- One-click voice recording with visual feedback (red idle, green recording)
+- Simple CLI interface - just run and speak
+- Records on launch, stops when you press Enter or Space
 - Local transcription via whisper.cpp (no internet required)
-- API transcription via any OpenAI-compatible endpoint (Groq, Ollama, OpenRouter, LM Studio, LocalAI)
-- Auto-pastes transcribed text into focused input field
-- SQLite history with right-click access
-- No background mic access - recording only on explicit click
+- Optional API transcription via any OpenAI-compatible endpoint (behind `api` feature flag)
 - Audio stays in-memory, never saved to disk
+- Minimal dependencies - no GUI framework required
 
 ## Dependencies
 
@@ -27,30 +21,23 @@ With **local mode** (`PRIMARY_TRANSCRIPTION_SERVICE=local`), everything stays on
 
 **Debian/Ubuntu:**
 ```bash
-sudo apt install libgtk-4-dev libgraphene-1.0-dev libvulkan-dev libasound2-dev xclip xdotool wmctrl cmake libclang-dev
+sudo apt install libasound2-dev cmake libclang-dev
 ```
 
 **Arch Linux:**
 ```bash
-sudo pacman -S gtk4 graphene vulkan-icd-loader alsa-lib xclip xdotool wmctrl cmake clang
+sudo pacman -S alsa-lib cmake clang
 ```
 
 ### Build tools
 
 - [just](https://github.com/casey/just) (optional, for convenient commands)
 
-### Runtime requirements
-
-- **X11 session required** - LinWhisper relies on `xdotool`, `xclip`, and `wmctrl` for window positioning, clipboard, and paste simulation. These are X11-only tools and **do not work on native Wayland**. If your distro runs Wayland by default (GNOME 41+, Fedora, etc.), you can either:
-  - Log in to an X11/Xorg session from your display manager
-  - Run under XWayland (may partially work, but not guaranteed)
-- Working microphone
-
 ## Setup
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/adolfousier/linwhisper.git
+   git clone https://github.com/harryhaaren/linwhisper.git
    cd linwhisper
    ```
 
@@ -66,20 +53,12 @@ sudo pacman -S gtk4 graphene vulkan-icd-loader alsa-lib xclip xdotool wmctrl cma
    just run-local ggml-small.en.bin
    ```
 
-   **API mode** (requires `API_KEY` in `.env`):
-   ```bash
-   just run-api
-   ```
-
    **Without just** (manual setup):
    ```bash
    # Download a whisper model for local mode
    mkdir -p ~/.local/share/linwhisper/models
    curl -L -o ~/.local/share/linwhisper/models/ggml-base.en.bin \
      https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
-
-   # Set backend in .env
-   # PRIMARY_TRANSCRIPTION_SERVICE=local  (or api)
 
    cargo build --release
    cargo run --release
@@ -99,60 +78,46 @@ Models are downloaded from [HuggingFace (ggerganov/whisper.cpp)](https://hugging
 
 ## Usage
 
-| Action | What happens |
-|---|---|
-| **Left-click** | Start recording (button turns green with pulse, shows stop icon) |
-| **Left-click again** | Stop recording, transcribe, auto-paste into focused input |
-| **Right-click** | Popover menu with History and Quit |
-| **Drag** | Move the button anywhere on screen - position saved across sessions |
+1. Run the program: `cargo run --release` (or `just run-local`)
+2. Start speaking immediately (recording begins on launch)
+3. Press **Enter** or **Space** to stop recording
+4. Wait for transcription to complete
+5. Your transcription will be displayed in the terminal
 
-> **Note:** Auto-paste uses `xclip` and `xdotool` to simulate Ctrl+V. If text doesn't paste automatically, it will still be copied to your clipboard - just paste manually with Ctrl+V.
+## Optional: API Mode
 
-## Compatible API Backends
+The API transcription feature is **disabled by default**. To enable it, build with the `api` feature flag:
 
-Any service exposing an OpenAI-compatible `/v1/audio/transcriptions` endpoint works. Set `API_BASE_URL`, `API_KEY`, and `API_MODEL` in your `.env`:
+```bash
+cargo build --release --features api
+```
 
-**Groq (default, no config needed):**
-```env
-PRIMARY_TRANSCRIPTION_SERVICE=api
-API_KEY=gsk_...
+Then set environment variables for API configuration:
+
+**Groq:**
+```bash
+export API_KEY=gsk_...
+cargo run --release --features api
 ```
 
 **Ollama (local, no API key needed):**
-```env
-PRIMARY_TRANSCRIPTION_SERVICE=api
-API_BASE_URL=http://localhost:11434/v1
-API_KEY=unused
-API_MODEL=whisper
+```bash
+export API_BASE_URL=http://localhost:11434/v1
+export API_KEY=unused
+export API_MODEL=whisper
+cargo run --release --features api
 ```
 
-**OpenRouter:**
-```env
-PRIMARY_TRANSCRIPTION_SERVICE=api
-API_BASE_URL=https://openrouter.ai/api/v1
-API_KEY=sk-or-...
-API_MODEL=openai/whisper-1
-```
-
-**LM Studio:**
-```env
-PRIMARY_TRANSCRIPTION_SERVICE=api
-API_BASE_URL=http://localhost:1234/v1
-API_KEY=unused
-API_MODEL=whisper-1
-```
+**Other OpenAI-compatible endpoints** (OpenRouter, LM Studio, LocalAI, etc.) work similarly - just set `API_BASE_URL`, `API_KEY`, and `API_MODEL`.
 
 ## Stack
 
 | Component | Crate/Tool |
 |-----------|-----------|
-| GUI | gtk4-rs (GTK 4) |
+| CLI | Pure Rust (no GUI framework) |
 | Audio | cpal + hound |
 | Local STT | whisper-rs (whisper.cpp) + rubato |
-| API STT | reqwest + OpenAI-compatible API |
-| Database | rusqlite (bundled SQLite) |
-| Paste | xclip + xdotool |
-| Config | dotenvy |
+| API STT | reqwest + OpenAI-compatible API (optional, feature-gated) |
 
 ## License
 
